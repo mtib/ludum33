@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PIXI Tutorial</title>
+    <meta charset="utf-8">
+</head>
+<style>
+    *{
+        margin: 0 0;
+        padding: 0 0;
+        font-family: "Arial",sans-serif;
+        margin-top: .5em;
+        margin-bottom: .2em;
+    }
+    canvas{
+        border-radius: .5em;
+    }
+    #game{
+        width: 800px;
+        margin: auto auto;
+    }
+</style>
+<body>
+<div id="game">
+</div>
+<p id="progress"></p>
+</body>
+<script type="text/javascript" src="pixi.min.js"></script>
+<script>
+    var renderer = PIXI.autoDetectRenderer(800,600,{antialiasing: false, transparent: false, resolution: 1});
+    var stage = new PIXI.Stage(0x66FF99, true);
+    var sc = new PIXI.Container();
+    var version = new PIXI.Text("Ludum Dare #33 - Warmup", {font: "32px sans-serif", fill: "black"});
+    version.position.set(10,10);
+    var bg;
+    var progress = document.getElementById("progress");
+
+    renderer.backgroundColor=0x999999;
+    document.getElementById("game").appendChild(renderer.view);
+    renderer.render(stage);
+
+    var cow, duck, fairy, fox, hedgehog, house, platypus, cone, woods, wrench;
+
+
+    // var wimmel = new Container();
+    // wimmel.addChild(one);
+    // stage.addChild(wimmel);
+
+    PIXI.loader
+        .add("bg.png")
+        .add("sprites/cow.png")
+        .add("sprites/duck.png")
+        .add("sprites/fairy.png")
+        .add("sprites/fox.png")
+        .add("sprites/hh.png")
+        .add("sprites/house.png")
+        .add("sprites/plat.png")
+        .add("sprites/sheep.png")
+        .add("sprites/tann.png")
+        .add("sprites/woods.png")
+        .add("sprites/wrench.png")
+        .load(setup);
+
+    function setup(){
+        //var oneSprite = new PIXI.Sprite.fromImage("/file/one.png");
+        bg = new PIXI.Sprite.fromImage("bg.png");
+        bg.interactive=true;
+        stage.addChild(bg);
+        stage.addChild(version);
+        // Stage height = stage.height
+        // one.x, one.y
+        // OR: one.position.set(x,y);
+        // one.anchor.x, one.anchor.y
+        // one.pivot.x, one.pivot.y
+        // one.scale.x, one.scale.y
+        // one.width, one.height
+        // randomInt(low, hight)
+        cow = new PIXI.Sprite.fromImage("sprites/cow.png");
+        duck = new PIXI.Sprite.fromImage("sprites/duck.png");
+        fairy = new PIXI.Sprite.fromImage("sprites/fairy.png");
+        fox = new PIXI.Sprite.fromImage("sprites/fox.png");
+        hedgehog = new PIXI.Sprite.fromImage("sprites/hh.png");
+        house = new PIXI.Sprite.fromImage("sprites/house.png");
+        platypus = new PIXI.Sprite.fromImage("sprites/plat.png");
+        sheep = new PIXI.Sprite.fromImage("sprites/sheep.png");
+        cone = new PIXI.Sprite.fromImage("sprites/tann.png");
+        woods = new PIXI.Sprite.fromImage("sprites/woods.png");
+        wrench = new PIXI.Sprite.fromImage("sprites/wrench.png");
+        sc.addChild(cow);
+        sc.addChild(duck);
+        sc.addChild(fairy);
+        sc.addChild(fox);
+        sc.addChild(hedgehog);
+        sc.addChild(house);
+        sc.addChild(platypus);
+        sc.addChild(sheep);
+        sc.addChild(cone);
+        sc.addChild(woods);
+        sc.addChild(wrench);
+        sc.interactive=true;
+        for (var i = sc.children.length - 1; i >= 0; i--) {
+            sc.children[i].interactive = true;
+            sc.children[i].position.set(rinr(10, 730),rinr(300,500));
+            sc.children[i].click=function(data){ textmanager(this); this.visible=false; };
+        };
+        stage.addChild(sc);
+        progress.innerHTML="<b>You have to find 11 Objects</b><br>Which contain:<ul><li>Cow</li><li>Duck</li><li>Fairy</li><li>Fox</li><li>Hedgehog</li><li>House</li><li>Platypus</li><li>Sheep</li><li>Cone</li><li>Woods</li><li>Wrench</li></ul>";
+
+        gameLoop();
+    }
+
+    function prorpl(from, to){
+        console.log("rpl: "+from+ " with " + to);
+        var org = progress.innerHTML;
+        console.log(org);
+        progress.innerHTML = org.replace(from,to);
+    }
+
+    function textmanager(obj){
+        if(obj==cow){
+            prorpl("Cow","<s>Cow</s>");
+        }else if(obj==duck){
+            prorpl("Duck","<s>DuckFairy</s>");
+        }else if(obj==fairy){
+            prorpl("Fairy","<s>Fairy</s>");
+        }else if(obj==fox){
+            prorpl("Fox","<s>Fox</s>");
+        }else if(obj==hedgehog){
+            prorpl("Hedgehog","<s>Hedgehog</s>");
+        }else if(obj==house){
+            prorpl("House","<s>House</s>");
+        }else if(obj==platypus){
+            prorpl("Platypus","<s>Platypus</s>");
+        }else if(obj==sheep){
+            prorpl("Sheep","<s>Sheep</s>");
+        }else if(obj==cone){
+            prorpl("Cone","<s>Cone</s>");
+        }else if(obj==wrench){
+            prorpl("Wrench","<s>Wrench</s>");
+        }else if(obj==woods){
+            prorpl("Woods","<s>Woods</s>");
+        }
+    }
+
+    function rinr(min, max){
+        return min + Math.random()*(max-min);
+    }
+
+    // create KeyObject
+    // use with:
+    // ko.press = function(){};
+    // ko.release = function(){};
+    // if(ko.isDown);
+    // if(ko.isUp);
+    function keyboard(keyCode) {
+        var key = {};
+        key.code = keyCode;
+        key.isDown = false;
+        key.isUp = true;
+        key.press = undefined;
+        key.release = undefined;
+        key.downHandler = function(event) {
+            if (event.keyCode === key.code) {
+                if (key.isUp && key.press) key.press();key.isDown = true;
+                key.isUp = false;
+            }
+            event.preventDefault();
+        };
+        key.upHandler = function(event) {
+            if (event.keyCode === key.code) {
+                if (key.isDown && key.release) key.release();
+                key.isDown = false;
+                key.isUp = true;
+            }
+            event.preventDefault();
+        };
+        window.addEventListener(
+            "keydown", key.downHandler.bind(key), false
+        );
+        window.addEventListener(
+            "keyup", key.upHandler.bind(key), false
+        );
+        return key;
+    }
+
+    function gameLoop() {
+        requestAnimationFrame(gameLoop);
+        logic();
+        renderer.render(stage);
+    }
+
+    function logic(){
+        // do logic stuff.
+        bg.position.set(0,0);
+        bg.width=800;
+        bg.height=600;
+
+
+        var tofind = 0;
+        for (var i = sc.children.length - 1; i >= 0; i--) {
+            if(sc.children[i].visible==true){
+                tofind+=1;
+            }
+        };
+
+        if(tofind==0){
+
+            progress.innerHTML="YOU WON!";
+        }
+    }
+
+
+</script>
+</html>
