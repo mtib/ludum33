@@ -3,6 +3,8 @@ var height = 450;
 var rendererStyle = {antialiasing: false, transparent: false, resolution: 1};
 var renderer = PIXI.autoDetectRenderer(width, height, rendererStyle);
 var stage = new PIXI.Container();
+var bgC = new PIXI.Container();
+stage.addChild(bgC);
 var defaultTextStyle = {font: "16px 'Bree Serif'", fill: "#FFFFFF", align: "center"};
 var version = "v_ld: 001_33";
 var versionText = new PIXI.Text(version, defaultTextStyle);
@@ -28,6 +30,7 @@ document.getElementById("game").appendChild(renderer.view);
 var menuC = new PIXI.Container();
 var playC = new PIXI.Container();
 var storyC = new PIXI.Container();
+var topC = new PIXI.Container();
 
 var monsterBoost = 1.1; // Multiplies every Monster Speed
 
@@ -50,6 +53,7 @@ var health = 100.0;
 stage.addChild(menuC);
 stage.addChild(playC);
 stage.addChild(storyC);
+stage.addChild(topC);
 
 var state;
 
@@ -70,10 +74,12 @@ PIXI.loader
     .add("Images/creatures/child1.png")
     .add("Images/Backgrounds/BackgroundPics/easy.png")
     .add("Images/Backgrounds/BackgroundPics/normal.png")
+    .add("Images/Backgrounds/noise.png")
     .load(setup);
 
 var monster1;
 var bg0, bg1, bg2, bg3;
+var bg2noise;
 
 var menuSprites = [];
 var soundToggle;
@@ -144,12 +150,22 @@ function setup(){
     bg0.x=0;
     bg0.y=0;
     bg0.visible=false;
+    bg2noise = new PIXI.Sprite.fromImage("Images/noise.png");
+    bg2noise.x=0;
+    bg2noise.y=0;
+    bg2noise.visible=false;
+    topC.addChild(bg2noise);
     bg1 = new PIXI.Sprite.fromImage("Images/Backgrounds/BackgroundPics/normal.png");
     bg1.x=0;
     bg1.y=0;
     bg1.visible=false;
-    playC.addChild(bg0);
-    playC.addChild(bg1);
+    bg2 = new PIXI.Sprite.fromImage("Images/Backgrounds/BackgroundPics/hard.png");
+    bg2.x=0;
+    bg2.y=0;
+    bg2.visible=false;
+    bgC.addChild(bg0);
+    bgC.addChild(bg1);
+    bgC.addChild(bg2);
     monster1 = new PIXI.Sprite.fromImage("Images/creatures/monster1.png");
     monster1.pivot.x = 0.5;
     monster1.pivot.y = 0.5;
@@ -556,6 +572,7 @@ function Casult(){
 }
 
 function changeState(newstate){
+    bg2noise.visible=false; // Disables effect
     if(state==menu){
         selectSound.play();
     }
@@ -577,9 +594,13 @@ function changeState(newstate){
         safeframecount = 20;
         if(hardness==0){
             bg0.visible=true;
-        } else if(hardness==1){
+        } else if(hardness==1 || hardness ==3){
             bg1.visible=true;
+        } else if(hardness==2){
+            bg2.visible=true;
+            bg2noise.visible=true;
         }
+
         playSound.stop();
         enemyBehaviour();
         score = 0;
@@ -618,6 +639,7 @@ function changeState(newstate){
     if(state == play){
         bg0.visible=false;
         bg1.visible=false;
+        bg2.visible=false;
         playSound.fadeOut(1000);
         playC.visible =false;
         fullScreenText.text="";
