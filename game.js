@@ -6,7 +6,7 @@ var stage = new PIXI.Container();
 var bgC = new PIXI.Container();
 stage.addChild(bgC);
 var defaultTextStyle = {font: "16px 'Bree Serif'", fill: "#FFFFFF", align: "center"};
-var version = "v_ld: 001_33";
+var version = "v_ld: 002_33";
 var versionText = new PIXI.Text(version, defaultTextStyle);
 var debugText = new PIXI.Text("", {font:"16px 'Bree Serif'", fill:"#3F3F3F"});
 debugText.anchor.y=1.0;
@@ -158,7 +158,7 @@ function setup(){
     bg1 = new PIXI.Sprite.fromImage("Images/Backgrounds/BackgroundPics/normal.png");
     bg1.x=0;
     bg1.y=0;
-    bg1.visible=false;
+    bg1.visible=true; // MENU BG
     bg2 = new PIXI.Sprite.fromImage("Images/Backgrounds/BackgroundPics/hard.png");
     bg2.x=0;
     bg2.y=0;
@@ -417,16 +417,17 @@ function Shot(x,y,vx,vy, travel){
 function Police(){
     var police = this;
     this.circle = rint(-2,2);
+    this.comfort = rint(-20,20);
     this.update=function(){
         this.sprites.shoot.position.set(this.x, this.y);
         this.lookAtMonster(this.sprites.shoot);
 
         var dist = vecDist(this, monster1);
         var dif = normalize( diff(this,monster1) );
-        if( dist > 250){
+        if( dist > 250+this.comfort){
             this.x -= dif.x;
             this.y -= dif.y;
-        }else if( dist < 150){
+        }else if( dist < 150+this.comfort){
             this.x += dif.x * 200/dist;
             this.y += dif.y * 200/dist;
         }else {
@@ -584,6 +585,9 @@ function changeState(newstate){
         menuSound.play();
         debug("");
         menuC.visible = true;
+        bg1.visible=true;
+        bg0.visible=false;
+        bg2.visible=false;
     }
     if(newstate == story){
         storySound.stop();
@@ -594,9 +598,15 @@ function changeState(newstate){
         safeframecount = 20;
         if(hardness==0){
             bg0.visible=true;
+            bg1.visible=false;
+            bg2.visible=false;
         } else if(hardness==1 || hardness ==3){
             bg1.visible=true;
+            bg0.visible=false;
+            bg2.visible=false;
         } else if(hardness==2){
+            bg0.visible=false;
+            bg1.visible=false;
             bg2.visible=true;
             bg2noise.visible=true;
         }
@@ -637,9 +647,6 @@ function changeState(newstate){
         storyC.visible =false;
     }
     if(state == play){
-        bg0.visible=false;
-        bg1.visible=false;
-        bg2.visible=false;
         playSound.fadeOut(1000);
         playC.visible =false;
         fullScreenText.text="";
