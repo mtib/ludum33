@@ -247,8 +247,8 @@ function Shot(x,y,vx,vy){
         this.x += this.vx;
         this.y += this.vy;
         line.lineTo(this.x, this.y);
-        renderer.render(line);
-        window.setTimeout(function(){ shot.move(); }, 40);
+
+        window.setTimeout(function(){ new Shot(this.x,this.y,this.vx,this.vy); delete shot; }, 40);
     };
     // this.remove = function(){
     //     playC.removeChild(line);
