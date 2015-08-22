@@ -6,7 +6,7 @@ var stage = new PIXI.Container();
 var bgC = new PIXI.Container();
 stage.addChild(bgC);
 var defaultTextStyle = {font: "16px 'Bree Serif'", fill: "#FFFFFF", align: "center"};
-var version = "v_ld: 002_33";
+var version = "v_ld: 003_33";
 var versionText = new PIXI.Text(version, defaultTextStyle);
 var debugText = new PIXI.Text("", {font:"16px 'Bree Serif'", fill:"#3F3F3F"});
 debugText.anchor.y=1.0;
@@ -27,9 +27,14 @@ stage.addChild(versionText);
 renderer.backgroundColor = 0x959595;
 document.getElementById("game").appendChild(renderer.view);
 
+var creditText = new PIXI.Text("Game by\nMarkus \"Tibyte\" Becker - Code, Graphics\nMalloth Rha - Music, Graphics", {font:"20px 'Bree Serif'", fill: "#000000", align:"center"});
+creditText.position.set(width/2, height-10);
+creditText.anchor = {x:0.5,y:1};
+
 var menuC = new PIXI.Container();
 var playC = new PIXI.Container();
 var storyC = new PIXI.Container();
+var creditsC = new PIXI.Container();
 var topC = new PIXI.Container();
 
 var monsterBoost = 1.1; // Multiplies every Monster Speed
@@ -37,10 +42,12 @@ var monsterBoost = 1.1; // Multiplies every Monster Speed
 var escapeKey = keyboard(27);
 var pointCheat = keyboard(80);
 pointCheat.press=function(){ health -= 10 };
+creditsC.addChild(creditText);
 
 menuC.visible=false;
 playC.visible=false;
 storyC.visible=false;
+creditsC.visible=false;
 
 var hardness = 0; // 0=easy, 1=normal, 2=hard, 3=endless;
 var goals = [20,50,200,-1];
@@ -53,11 +60,21 @@ var health = 100.0;
 stage.addChild(menuC);
 stage.addChild(playC);
 stage.addChild(storyC);
+stage.addChild(creditsC);
 stage.addChild(topC);
 
 var state;
 
 var enemyLogic;
+var cps = [
+    "Images/Backgrounds/EndingPhotos/endingpic1.png",
+    "Images/Backgrounds/EndingPhotos/endingpic2.png",
+    "Images/Backgrounds/EndingPhotos/endingpic3.png",
+    "Images/Backgrounds/EndingPhotos/endingpic4.png",
+    "Images/Backgrounds/EndingPhotos/endingpic5.png",
+    "Images/Backgrounds/EndingPhotos/endingpic6.png",
+    "Images/Backgrounds/EndingPhotos/endingpic7.png"
+]
 
 PIXI.loader
     .add("Images/buttons/story.png")
@@ -65,13 +82,21 @@ PIXI.loader
     .add("Images/buttons/normal.png")
     .add("Images/buttons/hard.png")
     .add("Images/buttons/endless.png")
-    .add("Images/buttons/sound.png") // Does nothing
+    .add("Images/buttons/sound.png")
     .add("Images/buttons/music.png")
+    .add("Images/buttons/credits.png")
     .add("Images/creatures/monster1.png")
     .add("Images/creatures/grand1.png")
     .add("Images/creatures/love1.png")
     .add("Images/creatures/police1.png")
     .add("Images/creatures/child1.png")
+    .add(cps[0])
+    .add(cps[1])
+    .add(cps[2])
+    .add(cps[3])
+    .add(cps[4])
+    .add(cps[5])
+    .add(cps[6])
     .add("Images/Backgrounds/BackgroundPics/easy.png")
     .add("Images/Backgrounds/BackgroundPics/normal.png")
     .add("Images/Backgrounds/noise.png")
@@ -80,6 +105,8 @@ PIXI.loader
 var monster1;
 var bg0, bg1, bg2, bg3;
 var bg2noise;
+
+var creditPics = [];
 
 var menuSprites = [];
 var soundToggle;
@@ -102,6 +129,11 @@ var storySound = new Howl({
     urls: ["Music/story.mp3"],
     loop: true,
     volume: storySoundVolume
+});
+var creditsSong = new Howl({
+    urls: ["Music/credits.mp3"],
+    loop: false,
+    volume: 0.04
 });
 var eatSound = new Howl({
     urls: ["Sounds/eat.wav"],
@@ -173,6 +205,17 @@ function setup(){
     // playC.addChild(hbc);
     // playC.addChild(hb); NOT
 
+    var cp_margin=10;
+    var cp_width = 600;
+    var cp_scaler= {x:0.75, y:0.75};
+    for (var i = 0; i < cps.length; i++) {
+        creditPics[i]=new PIXI.Sprite.fromImage(cps[i]);
+        creditPics[i].scale=cp_scaler;
+        creditPics[i].position.set(cp_margin+i/(cps.length-3)*(width-3*cp_margin-cp_width),i*10+cp_margin);
+        creditPics[i].visible=false;
+        creditsC.addChild(creditPics[i]);
+    };
+
     escapeKey.press = function(){ changeState(menu) };
 
     var menuButtons = [
@@ -202,6 +245,12 @@ function setup(){
     menuC.addChild(soundToggle);
     menuC.addChild(musicToggle);
 
+    creditButton = new PIXI.Sprite.fromImage("Images/buttons/credits.png");
+    creditButton.interactive=true;
+    creditButton.click=function(data){ changeState(credit) };
+    creditButton.position.set(10,36+148); // 36 margin top + 74*n spacing
+    menuC.addChild(creditButton);
+
 
     // Done loading, now switching to MENU
     changeState(menu);
@@ -214,6 +263,18 @@ function gameloop(){
     mousePos = renderer.plugins.interaction.mouse.global
     state();
     renderer.render(stage);
+}
+
+var creditUnroll = 0;
+var timers = [19000,15000,8000,7000,17000,22000];
+var nextTimeOut;
+function creditPictures(){
+    creditPics[creditUnroll].visible=true;
+    nextTimeOut = window.setTimeout(function(){creditPictures()},timers[creditUnroll]);
+    creditUnroll+=1
+}
+function credit(){
+
 }
 
 function menu(){
@@ -636,8 +697,25 @@ function changeState(newstate){
             childArray[i] = new Child();
         }
     }
+    if (newstate == credit) {
+        creditUnroll=0;
+        bg2.visible=true;
+        bg1.visible=false;
+        creditsC.visible=true;
+        if(musicmult!=0)
+            creditsSong.play();
+        creditPictures();
+    };
 
     //state = oldstate
+    if(state == credit){
+        creditsSong.stop();
+        creditsC.visible=false;
+        clearTimeout(nextTimeOut);
+        for (var i = creditPics.length - 1; i >= 0; i--) {
+            creditPics[i].visible=false;
+        };
+    }
     if(state == menu){
         menuSound.fadeOut(1000);
         menuC.visible =false;
