@@ -24,7 +24,7 @@ stage.addChild(hitescp);
 stage.addChild(debugText);
 versionText.position.set(10,10);
 stage.addChild(versionText);
-renderer.backgroundColor = 0x959595;
+renderer.backgroundColor = 0x000000;
 document.getElementById("game").appendChild(renderer.view);
 
 var creditText = new PIXI.Text("Game by\nMarkus \"Tibyte\" Becker - Code, Graphics\nMalloth Rha - Music, Graphics", {font:"20px 'Bree Serif'", fill: "#000000", align:"center"});
@@ -124,16 +124,74 @@ var playSound = new Howl({
     loop: true,
     volume: playSoundVolume
 });
-var storySoundVolume = 0.1;
+var storySoundVolume = 0.05;
 var storySound = new Howl({
     urls: ["Music/story.mp3"],
     loop: true,
     volume: storySoundVolume
 });
+
+//You are the monster now (F B C)
+
+// You are the monster now
+// And you found your real love
+// You are the monster now
+// The stars are shining above
+
+// Yeah you found your love
+// But think about what you did
+// You killed a shitload of people
+// An you just deal with it
+
+// Look over there this little happy family
+// But now they’re sad, because you killed their daddy.
+// And this kind man is waiting for his wife at the altar
+// But she will not come because you killed her. Hallelujah.
+
+// You are the monster now,
+// Congrets from me for you
+// Live long and happy just like you already do.
+
+// Maybe sometimes you will hear this song again
+// But not if I can destroy my chain.
+
 var creditsSong = new Howl({
     urls: ["Music/credits.mp3"],
     loop: false,
     volume: 0.04
+});
+
+// [TRAINEE]
+// Hey Prof. What are you searching for in the 3rd lab floor?
+// [PROFESSOR]
+// Psst! Shut up you little Trainee.
+// Don't speak out loud about these [...]
+// We got a female monster, it's very bloody,
+// and we caged it into a human body.
+// There, it isn't dangerous anymore:
+// no blood, no intrails, and no gore.
+// We're not doing this just for science you know.
+// It is for humanity, for every class, above and below.
+// [TRAINEE]
+// But isn't it dangerous to cage this thing?
+// There could be other monsters to free them!
+// [PROFESSOR]
+// Don't be ridiculus, other monsters don't exist.
+var storyModeTextBlock = new PIXI.Text(" --- IN A SECRET LABORATORY ---\n\t\t\t[TRAINEE]\nHey Prof. What are you searching for in the laboratory number 4?\n\t\t\t[PROFESSOR]\nPsst! Shut up you little Trainee.\nDon't speak too loud about this thing!\nWe got a female monster, it's very bloody,\nand we caged it into a human body.\nThere, it isn't dangerous anymore:\nno blood, no intrails, and no gore.\nWe're not doing this just for science you know.\nIt is for humanity, for every class, above and below.\n\t\t\t[TRAINEE]\nBut isn't it dangerous to cage this thing?\nThere could be other monsters to free them!\n\t\t\t[PROFESSOR]\nDon't be ridiculus, other monsters don't exist.\n --- THIS IS WHERE YOUR STORY BEGINS ---", {fill:"#FFFFFF", font:"20px 'Bree Serif'", align:"left"});
+    storyModeTextBlock.position.set(50,26);
+function storyTextReset(){
+    storyModeTextBlock.text=" --- IN A SECRET LABORATORY ---\n\t\t\t[TRAINEE]\nHey Prof. What are you searching for in the laboratory number 4?\n\t\t\t[PROFESSOR]\nPsst! Shut up you little Trainee.\nDon't speak too loud about this thing!\nWe got a female monster, it's very bloody,\nand we caged it into a human body.\nThere, it isn't dangerous anymore:\nno blood, no intrails, and no gore.\nWe're not doing this just for science you know.\nIt is for humanity, for every class, above and below.\n\t\t\t[TRAINEE]\nBut isn't it dangerous to cage this thing?\nThere could be other monsters to free them!\n\t\t\t[PROFESSOR]\nDon't be ridiculus, other monsters don't exist.\n --- THIS IS WHERE YOUR STORY BEGINS ---";
+    storyModeTextBlock.style={fill:"#FFFFFF", font:"20px 'Bree Serif'", align:"left"};
+    storyModeTextBlock.position.set(50,26);
+    storyModeTextBlock.anchor = {x:0, y:0};
+}
+storyC.addChild(storyModeTextBlock);
+
+var storyModeText = new Howl({ // Played once on "Story"
+    urls: ["Music/story_text.mp3"],
+    loop: false,
+    volume: 1,
+    onend: function(){ storyModeTextBlock.position.set(width/2,height/2); storyModeTextBlock.anchor = {x:0.5,y:0.5}; storyModeTextBlock.style.align="center" ;storyModeTextBlock.text = " --- YOU ARE THE MONSTER ---\nFind your loved one!\nBy hugging everyone as hard as you can!\n --- BUT BEWARE OF THE POLICE ---"; window.setTimeout(function(){ changeState(menu); storyTextReset();},10000); }
 });
 var eatSound = new Howl({
     urls: ["Sounds/eat.wav"],
@@ -651,8 +709,11 @@ function changeState(newstate){
         bg2.visible=false;
     }
     if(newstate == story){
+        bg1.visible=false;
+        versionText.visible=false;
         storySound.stop();
         storySound.play();
+        storyModeText.play(); // this has onend function dealing with everything
         storyC.visible = true;
     }
     if(newstate == play){
@@ -722,7 +783,9 @@ function changeState(newstate){
     }
     if(state == story){
         storySound.fadeOut(1000);
+        storyModeText.stop();
         storyC.visible =false;
+        versionText.visible=true;
     }
     if(state == play){
         playSound.fadeOut(1000);
