@@ -210,15 +210,12 @@ function story(){
 // easy, normal, hard, endless
 var numCasult = [8,10,8,6];
 var casultArray = [];
-var numPolice = [0,5,10,6];
+var numPolice = [1,5,10,6];
 var policeArray = [];
 function enemyBehaviour(){
     if(state!=play){
         for (var i = casultArray.length - 1; i >= 0; i--) {
             playC.removeChild(casultArray[i].currSprite);
-        };
-        for (var i = policeArray.length - 1; i >= 0; i--) {
-            playC.removeChild(policeArray[i].currSprite);
         };
     }
     for (var i = casultArray.length - 1; i >= 0; i--) {
@@ -235,25 +232,42 @@ function enemyBehaviour(){
     };
 }
 
+function Shot(x,y,vx,vy){
+    this.damage = 1;
+    this.speed = 3;
+    this.x = x;
+    this.y = y;
+    this.vx = vx;
+    this.vy = vy;
+    var shot = this;
+    var line = new PIXI.Graphics();
+    this.move = function (){
+        line.lineStyle (5, "#F0B031", 1);
+        line.moveTo(this.x,this.y);
+        this.x += this.vx;
+        this.y += this.vy;
+        line.lineTo(this.x, this.y);
+        renderer.render(line);
+        window.setTimeout(function(){ shot.move(); }, 40);
+    };
+    // this.remove = function(){
+    //     playC.removeChild(line);
+    // };
+    this.move();
+}
+
 function Police(){
     this.update=function(){
-        var currSprite;
         playC.removeChild(this.sprites.shoot);
         playC.removeChild(this.sprites.walk);
         if(this.shooting){
-            currSprite=this.sprites.shoot;
+            playC.addChild(this.sprites.shoot);
+            this.sprites.shoot.position.set(this.x, this.y);
+            this.lookAtMonster(this.sprites.shoot);
+            var relMon = normalize(diff(monster1, this.sprites.shoot));
+            new Shot(this.x, this.y,relMon.x*this.shotTravelSpeed, relMon.y*this.shotTravelSpeed);
         }else{
-            currSprite=this.sprites.walk;
-        }
-        currSprite.position.set(this.x, this.y);
-        this.lookAtMonster(currSprite);
-        playC.addChild(currSprite);
-
-
-        if(this.shooting){
-            this.sprites.shoot = currSprite;
-        }else{
-            this.sprites.walk = currSprite;
+            playC.addChild(this.sprites.walk);
         }
     }
     this.lookAtMonster=function(sprite){
@@ -265,6 +279,7 @@ function Police(){
         sprite.rotation=lookangle;
     }
     this.init=function(){
+        this.shotTravelSpeed =5;
         this.x=rint(-8, width+8);
         this.y=rint(-32, -8+height);
         this.shooting = true;
@@ -274,6 +289,12 @@ function Police(){
             shoot:new PIXI.Sprite.fromImage("Images/creatures/police1.png"),
             walk: new PIXI.Sprite.fromImage("Images/creatures/police1.png")
         };
+        this.sprites.shoot.pivot = {x:0.5, y:0.5};
+        this.sprites.shoot.anchor = {x:0.5, y:0.5};
+        this.sprites.shoot.scale = {x:0.5, y:0.5};
+        this.sprites.walk.pivot = {x:0.5, y:0.5};
+        this.sprites.walk.amchor = {x:0.5, y:0.5};
+        this.sprites.walk.scale = {x:0.5, y:0.5};
 
     }
     this.init();
