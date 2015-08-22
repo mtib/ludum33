@@ -120,11 +120,29 @@ var hitSound = new Howl({
     volume: 0.2
 });
 
+
+var hbc = new PIXI.Graphics();
+var hb = new PIXI.Graphics();
+function drawHealth(){
+    hbc.x=0;
+    hbc.y=0;
+    hbc.lineStyle(10, 0x525252, 1);
+    hbc.moveTo(width-15, 5);
+    hbc.lineTo(width-15, height-5);
+    hb.x=0;
+    hb.y=0;
+    hb.lineStyle(6, 0x1D811A, 1);
+    hb.moveTo(width-15, (100-health)/100 * (height-14) + 7);
+    hb.lineTo(width-15, height-7);
+}
+
 function setup(){
     monster1 = new PIXI.Sprite.fromImage("Images/creatures/monster1.png");
     monster1.pivot.x = 0.5;
     monster1.pivot.y = 0.5;
     playC.addChild(monster1);
+    // playC.addChild(hbc);
+    // playC.addChild(hb); NOT WORKING!
 
     escapeKey.press = function(){ changeState(menu) };
 
@@ -178,6 +196,7 @@ function end(){
 }
 
 function play(){
+    drawHealth();
     var mouseAngle = -Math.atan((monster1.x-mousePos.x)/(monster1.y-mousePos.y))
     var dist = vecDist(mousePos, monster1);
     var dt = "";
@@ -241,6 +260,7 @@ function story(){
 
 }
 
+
 // easy, normal, hard, endless
 var numCasult = [8,15,10,12];
 var casultArray = [];
@@ -253,6 +273,9 @@ function enemyBehaviour(){
     if(state!=play){
         for (var i = casultArray.length - 1; i >= 0; i--) {
             playC.removeChild(casultArray[i].currSprite);
+        };
+        for (var i = childArray.length - 1; i >= 0; i--) {
+            childArray[i].die();
         };
     }
     for (var i = casultArray.length - 1; i >= 0; i--) {
@@ -278,19 +301,35 @@ function enemyBehaviour(){
 function Child(){
     var child = this;
     this.die = function(){
-        playC.removeChild(this);
+        playC.removeChild(this.sprite);
+        return new Child();
     };
     this.update = function(){
         this.sprite.x += this.vx;
         this.sprite.y += this.vy;
-        if( /* Check for out of bounds */)
+        if( this.sprite.x > width + 32 || this.sprite.x < -32 || this.sprite.y > height + 32 || this.sprite.y < -32 )
+            this.put();
+        if(vecDist(monster1, this.sprite) < 32){
+            score += 1;
+            eatSound.play();
+            return this.die();
+        }
     };
     this.selectNewWay = function(){
-        child.vx = rint(-1,1) * child.speed;
-        child.vy = rint(-1,1) * child.speed;
+        var d = diff(this.sprite, monster1);
+        child.vx = 20/(abs(d.x)+3)+rint(-1,1) * child.speed;
+        child.vy = 20/(abs(d.y)+3)+rint(-1,1) * child.speed;
         window.setTimeout(function(){
             child.selectNewWay();
-        }, 4000 + rint(10,2000));
+        }, 1000 + rint(10,1000));
+        this.face();
+    }
+    this.face = function(){
+        var lookangle = -Math.atan((this.vx)/(this.vy));
+        if(this.vy>0){
+            lookangle+=3.1415;
+        }
+        this.sprite.rotation=lookangle;
     }
     this.put = function(){
         this.sprite.x = rint(0, width);
@@ -299,7 +338,7 @@ function Child(){
             this.sprite.y = height+32+rint(-20,-16);
         }
     };
-    this.speed = 5;
+    this.speed = 3;
     this.sprite = new PIXI.Sprite.fromImage("Images/creatures/child1.png");
     this.sprite.anchor = {x:0.5, y:0.5};
     this.sprite.pivot = {x:0.5,y:0.5};
@@ -348,31 +387,32 @@ function Shot(x,y,vx,vy, travel){
 
 function Police(){
     var police = this;
+    this.circle = rint(-2,2);
     this.update=function(){
         this.sprites.shoot.position.set(this.x, this.y);
         this.lookAtMonster(this.sprites.shoot);
 
         var dist = vecDist(this, monster1);
+        var dif = normalize( diff(this,monster1) );
         if( dist > 250){
-            var dif = normalize( diff(this,monster1) );
             this.x -= dif.x;
             this.y -= dif.y;
-        }
-        if( dist < 150){
-            var dif = normalize( diff(this,monster1) );
+        }else if( dist < 150){
             this.x += dif.x * 200/dist;
             this.y += dif.y * 200/dist;
+        }else {
+            var c = {x:-dif.y*this.circle,y:dif.x*this.circle};
+            this.x += c.x;
+            this.y += c.y;
         }
     }
     this.setShoot = function (bool){ if( bool == this.shooting ){return undefined}; this.shooting = bool; this.shoot(); };
     this.shoot = function(){
         if(police.shooting){
 
-            if(safeframecount>0){
-                safeframecount -= 1;
-            }else {
-                var relMon = normalize(diff(monster1, police));
+            if(score > 0){
                 shootSound.play();
+                var relMon = normalize(diff(monster1, police));
                 new Shot(police.x+Math.sin(police.sprites.shoot.rotation-.25*3.1415)*14.284, police.y+Math.cos(police.sprites.shoot.rotation-.25*3.1415)*14.284,relMon.x*police.shotTravelSpeed, relMon.y*police.shotTravelSpeed);
 
             }
@@ -417,6 +457,7 @@ function Police(){
 }
 
 function Woman(x,y){
+    endSound.play(); // Woman Spawns. Game won
     score +=1;
     health = 100;
     this.sprite = new PIXI.Sprite.fromImage("Images/creatures/love1.png");
@@ -424,7 +465,6 @@ function Woman(x,y){
     this.sprite.y=y;
     this.sprite.anchor = {x:0.5,y:0.5};
     this.sprite.pivot = {x:0.5,y:0.5};
-    endSound.play(); // Woman Spawns. Game won
     this.lookAtMonster = function(){
         var vector = normalize(diff(monster1,this.sprite));
         var lookangle = -Math.atan((vector.x)/(vector.y));
@@ -503,6 +543,9 @@ function Casult(){
 }
 
 function changeState(newstate){
+    if(state==menu){
+        selectSound.play();
+    }
     if(state==newstate){
         return;
     }
@@ -543,12 +586,10 @@ function changeState(newstate){
         for(i=0;i<numChildren[hardness];i++){
             childArray[i] = new Child();
         }
-
     }
 
     //state = oldstate
     if(state == menu){
-        selectSound.play();
         menuSound.fadeOut(1000);
         menuC.visible =false;
     }
@@ -590,6 +631,11 @@ function vecDist(a,b){
 }
 
 function refreshSounds(){
+    eatSound.volume(0.4 * soundmult);
+    selectSound.volume(0.3*soundmult);
+    endSound.volume(0.2*soundmult);
+    shootSound.volume(0.1*soundmult);
+    hitSound.volume(0.2*soundmult);
     if(soundmult == 0){
         soundToggle.rotation = .2; // 1 rad
     } else {
