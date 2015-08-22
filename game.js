@@ -93,6 +93,31 @@ var storySound = new Howl({
     loop: true,
     volume: storySoundVolume
 });
+var eatSound = new Howl({
+    urls: ["Sounds/eat.wav"],
+    loop: false,
+    volume: 0.4
+});
+var selectSound = new Howl({
+    urls: ["Sounds/select.wav"],
+    loop: false,
+    volume: 0.3
+});
+var endSound = new Howl({
+    urls: ["Sounds/end.wav"],
+    loop: false,
+    volume: 0.2
+});
+var shootSound = new Howl({
+    urls: ["Sounds/shoot.wav"],
+    loop: false,
+    volume: 0.1
+});
+var hitSound = new Howl({
+    urls: ["Sounds/hit.wav"],
+    loop: false,
+    volume: 0.2
+});
 
 function setup(){
     monster1 = new PIXI.Sprite.fromImage("Images/creatures/monster1.png");
@@ -195,12 +220,18 @@ function play(){
 function win(){
     fullScreenText.text = "You win.\nYou found love!";
     hitescp.text = "Hit [ESCAPE] to return to the menu";
+        for (var i = policeArray.length - 1; i >= 0; i--) {
+            policeArray[i].die();
+        };
 }
 
 function lose(){
     playC.visible=false;
     fullScreenText.text = "You lose.\nYou were shot down!";
     hitescp.text = "Hit [ESCAPE] to return to the menu";
+        for (var i = policeArray.length - 1; i >= 0; i--) {
+            policeArray[i].die();
+        };
 }
 
 function story(){
@@ -212,6 +243,7 @@ var numCasult = [8,10,8,6];
 var casultArray = [];
 var numPolice = [1,5,10,6];
 var policeArray = [];
+var safeframecount = 0;
 function enemyBehaviour(){
     if(state!=play){
         for (var i = casultArray.length - 1; i >= 0; i--) {
@@ -232,23 +264,34 @@ function enemyBehaviour(){
     };
 }
 
-function Shot(x,y,vx,vy){
-    this.damage = 1;
-    this.speed = 3;
+function Shot(x,y,vx,vy, travel){
+    if(travel === undefined){
+        travel = 0;
+    }
+    this.damage = 10;
     this.x = x;
     this.y = y;
     this.vx = vx;
     this.vy = vy;
     var shot = this;
-    var line = new PIXI.Graphics();
+    this.line = new PIXI.Graphics();
     this.move = function (){
-        line.lineStyle (5, "#F0B031", 1);
-        line.moveTo(this.x,this.y);
+        this.line.lineStyle (5, 0xD9600B, 1);
+        this.line.moveTo(this.x,this.y);
         this.x += this.vx;
         this.y += this.vy;
-        line.lineTo(this.x, this.y);
-
-        window.setTimeout(function(){ new Shot(this.x,this.y,this.vx,this.vy); delete shot; }, 40);
+        this.line.lineTo(this.x, this.y);
+        playC.addChild(this.line);
+        if(vecDist(this,monster1)<30){
+            health -= this.damage;
+            hitSound.play();
+            if(health<=0){
+                endSound.play();
+            }
+        }else if(travel<300){
+            window.setTimeout(function(){ new Shot(shot.x,shot.y,shot.vx,shot.vy, travel+Math.sqrt(shot.vx*shot.vx+shot.vy*shot.vy)); }, 30);
+        }
+        window.setTimeout(function(){ playC.removeChild(shot.line) }, 200);
     };
     // this.remove = function(){
     //     playC.removeChild(line);
@@ -257,6 +300,7 @@ function Shot(x,y,vx,vy){
 }
 
 function Police(){
+    var police = this;
     this.update=function(){
         playC.removeChild(this.sprites.shoot);
         playC.removeChild(this.sprites.walk);
@@ -264,12 +308,25 @@ function Police(){
             playC.addChild(this.sprites.shoot);
             this.sprites.shoot.position.set(this.x, this.y);
             this.lookAtMonster(this.sprites.shoot);
-            var relMon = normalize(diff(monster1, this.sprites.shoot));
-            new Shot(this.x, this.y,relMon.x*this.shotTravelSpeed, relMon.y*this.shotTravelSpeed);
         }else{
-            playC.addChild(this.sprites.walk);
+            //playC.addChild(this.sprites.walk);
         }
     }
+    this.setShoot = function (bool){ if( bool == this.shooting ){return undefined}; this.shooting = bool; this.shoot(); };
+    this.shoot = function(){
+        if(police.shooting){
+
+            if(safeframecount>0){
+                safeframecount -= 1;
+            }else {
+                var relMon = normalize(diff(monster1, police));
+                shootSound.play();
+                new Shot(police.x+Math.sin(police.sprites.shoot.rotation-.25*3.1415)*14.284, police.y+Math.cos(police.sprites.shoot.rotation-.25*3.1415)*14.284,relMon.x*police.shotTravelSpeed, relMon.y*police.shotTravelSpeed);
+
+            }
+            window.setTimeout(function(){police.shoot()}, 3000 + rint(10,1000));
+        }
+    };
     this.lookAtMonster=function(sprite){
         var vector = normalize(diff(monster1,sprite));
         var lookangle = -Math.atan((vector.x)/(vector.y));
@@ -278,13 +335,19 @@ function Police(){
         }
         sprite.rotation=lookangle;
     }
+    this.die=function(){
+        this.setShoot(false);
+        playC.removeChild(this.sprites.shoot);
+        playC.removeChild(this.sprites.walk);
+    }
     this.init=function(){
         this.shotTravelSpeed =5;
-        this.x=rint(-8, width+8);
-        this.y=rint(-32, -8+height);
-        this.shooting = true;
-        if(Math.random()>.5)
-            this.y=-this.y;
+        this.x=rint(0, width);
+        this.y=rint(0, height);
+        this.shooting = false;
+        this.setShoot(true); // start shooting;
+        // if(Math.random()>.5)
+        //     this.y=-this.y;
         this.sprites={
             shoot:new PIXI.Sprite.fromImage("Images/creatures/police1.png"),
             walk: new PIXI.Sprite.fromImage("Images/creatures/police1.png")
@@ -308,6 +371,7 @@ function Woman(x,y){
     this.sprite.y=y;
     this.sprite.anchor = {x:0.5,y:0.5};
     this.sprite.pivot = {x:0.5,y:0.5};
+    endSound.play(); // Woman Spawns. Game won
     this.lookAtMonster = function(){
         var vector = normalize(diff(monster1,this.sprite));
         var lookangle = -Math.atan((vector.x)/(vector.y));
@@ -359,10 +423,13 @@ function Casult(){
         if(this.x<-32 || this.x>width+32 || this.y<-32 || this.y>height+32){
             playC.removeChild(this.currSprite);
             return new Casult();
-        } else if(mondist<50){
+        } else if(mondist<30){
             playC.removeChild(this.currSprite);
             if(score == goals[hardness]-1){
+                // Sound is played in Woman(...)
                 return new Woman(this.x, this.y);
+            }else {
+                eatSound.play();
             }
             score += 1;
             return new Casult();
@@ -398,6 +465,7 @@ function changeState(newstate){
         storyC.visible = true;
     }
     if(newstate == play){
+        safeframecount = 20;
         playSound.stop();
         enemyBehaviour();
         score = 0;
@@ -422,7 +490,9 @@ function changeState(newstate){
 
     }
 
+    //state = oldstate
     if(state == menu){
+        selectSound.play();
         menuSound.fadeOut(1000);
         menuC.visible =false;
     }
@@ -434,7 +504,10 @@ function changeState(newstate){
         playSound.fadeOut(1000);
         playC.visible =false;
         fullScreenText.text="";
-        hitescp.text=""
+        hitescp.text="";
+        for (var i = policeArray.length - 1; i >= 0; i--) {
+            policeArray[i].die();
+        };
     }
     refreshMusic();
     state = newstate;
