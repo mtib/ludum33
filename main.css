@@ -1,0 +1,29 @@
+@import url(http://fonts.googleapis.com/css?family=Bree+Serif);
+*{
+    font-family: "Bree Serif", serif;
+}
+body{
+    background-color: #CACACA;
+    text-align: center;
+}
+h1{
+    margin-bottom: 0px;
+}
+small{
+    margin-top: 0px;
+}
+#goal{
+    width: 30em;
+    margin: auto auto;
+    margin-top: 1em;
+    margin-bottom: 1em;
+}
+#game{
+    width: 800px;
+    height: 450px;
+    margin: auto auto;
+    padding: 0 0;
+}
+p{
+    color: #3F3F3F;
+}
