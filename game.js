@@ -69,10 +69,11 @@ PIXI.loader
     .add("Images/creatures/police1.png")
     .add("Images/creatures/child1.png")
     .add("Images/Backgrounds/BackgroundPics/easy.png")
+    .add("Images/Backgrounds/BackgroundPics/normal.png")
     .load(setup);
 
 var monster1;
-var bg0;
+var bg0, bg1, bg2, bg3;
 
 var menuSprites = [];
 var soundToggle;
@@ -142,7 +143,13 @@ function setup(){
     bg0 = new PIXI.Sprite.fromImage("Images/Backgrounds/BackgroundPics/easy.png");
     bg0.x=0;
     bg0.y=0;
+    bg0.visible=false;
+    bg1 = new PIXI.Sprite.fromImage("Images/Backgrounds/BackgroundPics/normal.png");
+    bg1.x=0;
+    bg1.y=0;
+    bg1.visible=false;
     playC.addChild(bg0);
+    playC.addChild(bg1);
     monster1 = new PIXI.Sprite.fromImage("Images/creatures/monster1.png");
     monster1.pivot.x = 0.5;
     monster1.pivot.y = 0.5;
@@ -568,6 +575,11 @@ function changeState(newstate){
     }
     if(newstate == play){
         safeframecount = 20;
+        if(hardness==0){
+            bg0.visible=true;
+        } else if(hardness==1){
+            bg1.visible=true;
+        }
         playSound.stop();
         enemyBehaviour();
         score = 0;
@@ -604,6 +616,8 @@ function changeState(newstate){
         storyC.visible =false;
     }
     if(state == play){
+        bg0.visible=false;
+        bg1.visible=false;
         playSound.fadeOut(1000);
         playC.visible =false;
         fullScreenText.text="";
