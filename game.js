@@ -40,7 +40,7 @@ playC.visible=false;
 storyC.visible=false;
 
 var hardness = 0; // 0=easy, 1=normal, 2=hard, 3=endless;
-var goals = [20,100,500,-1];
+var goals = [20,50,200,-1];
 var soundmult = 1; // 1.0 to 0.0
 var musicmult = 1; // 1.0 to 0.0
 
@@ -67,6 +67,7 @@ PIXI.loader
     .add("Images/creatures/grand1.png")
     .add("Images/creatures/love1.png")
     .add("Images/creatures/police1.png")
+    .add("Images/creatures/child1.png")
     .load(setup);
 
 var monster1;
@@ -185,6 +186,8 @@ function play(){
             dist = 225.0;
         var relDist = Math.sqrt(dist/225.0);
         var norm = normalize(diff(mousePos, monster1));
+        // TO DISABLE MOUSE SPEED METER
+        relDist = 1;
         if(hardness == 3){
             monster1.position.set(monster1.x+relDist*norm.x*(monsterBoost+score/100),monster1.y+relDist*norm.y*(monsterBoost+score/100));
         }else{
@@ -239,10 +242,12 @@ function story(){
 }
 
 // easy, normal, hard, endless
-var numCasult = [8,10,8,6];
+var numCasult = [8,15,10,12];
 var casultArray = [];
 var numPolice = [1,5,10,6];
 var policeArray = [];
+var numChildren = [10,15,5,10];
+var childArray = [];
 var safeframecount = 0;
 function enemyBehaviour(){
     if(state!=play){
@@ -262,6 +267,48 @@ function enemyBehaviour(){
             policeArray[i]=n; // this seems to be empty
         }
     };
+    for (var i = childArray.length - 1; i >= 0; i--) {
+        var n = childArray[i].update();
+        if(n != undefined){
+            childArray[i]=n; // this seems to be empty
+        }
+    };
+}
+
+function Child(){
+    var child = this;
+    this.die = function(){
+        playC.removeChild(this);
+    };
+    this.update = function(){
+        this.sprite.x += this.vx;
+        this.sprite.y += this.vy;
+        if( /* Check for out of bounds */)
+    };
+    this.selectNewWay = function(){
+        child.vx = rint(-1,1) * child.speed;
+        child.vy = rint(-1,1) * child.speed;
+        window.setTimeout(function(){
+            child.selectNewWay();
+        }, 4000 + rint(10,2000));
+    }
+    this.put = function(){
+        this.sprite.x = rint(0, width);
+        this.sprite.y = rint(-20,-16);
+        if(Math.random()>0.5){
+            this.sprite.y = height+32+rint(-20,-16);
+        }
+    };
+    this.speed = 5;
+    this.sprite = new PIXI.Sprite.fromImage("Images/creatures/child1.png");
+    this.sprite.anchor = {x:0.5, y:0.5};
+    this.sprite.pivot = {x:0.5,y:0.5};
+    this.sprite.scale = {x:0.45,y:0.45};
+    this.vx = 0;
+    this.vy = 0;
+    this.put();
+    this.selectNewWay();
+    playC.addChild(this.sprite);
 }
 
 function Shot(x,y,vx,vy, travel){
@@ -282,7 +329,7 @@ function Shot(x,y,vx,vy, travel){
         this.y += this.vy;
         this.line.lineTo(this.x, this.y);
         playC.addChild(this.line);
-        if(vecDist(this,monster1)<30){
+        if(vecDist(this,monster1)<27){
             health -= this.damage;
             hitSound.play();
             if(health<=0){
@@ -302,14 +349,19 @@ function Shot(x,y,vx,vy, travel){
 function Police(){
     var police = this;
     this.update=function(){
-        playC.removeChild(this.sprites.shoot);
-        playC.removeChild(this.sprites.walk);
-        if(this.shooting){
-            playC.addChild(this.sprites.shoot);
-            this.sprites.shoot.position.set(this.x, this.y);
-            this.lookAtMonster(this.sprites.shoot);
-        }else{
-            //playC.addChild(this.sprites.walk);
+        this.sprites.shoot.position.set(this.x, this.y);
+        this.lookAtMonster(this.sprites.shoot);
+
+        var dist = vecDist(this, monster1);
+        if( dist > 250){
+            var dif = normalize( diff(this,monster1) );
+            this.x -= dif.x;
+            this.y -= dif.y;
+        }
+        if( dist < 150){
+            var dif = normalize( diff(this,monster1) );
+            this.x += dif.x * 200/dist;
+            this.y += dif.y * 200/dist;
         }
     }
     this.setShoot = function (bool){ if( bool == this.shooting ){return undefined}; this.shooting = bool; this.shoot(); };
@@ -358,6 +410,7 @@ function Police(){
         this.sprites.walk.pivot = {x:0.5, y:0.5};
         this.sprites.walk.amchor = {x:0.5, y:0.5};
         this.sprites.walk.scale = {x:0.5, y:0.5};
+        playC.addChild(this.sprites.shoot);
 
     }
     this.init();
@@ -486,6 +539,9 @@ function changeState(newstate){
                 playC.removeChild(casultArray[i].currSprite);
             }
             casultArray[i] = new Casult();
+        }
+        for(i=0;i<numChildren[hardness];i++){
+            childArray[i] = new Child();
         }
 
     }
