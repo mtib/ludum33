@@ -63,6 +63,7 @@ function story(){
 function changeState(newstate){
     if(newstate == menu){
         menuSound.play();
+        console.log("Now Playing MenuSound!");
     }
 
     if(state == menu){
