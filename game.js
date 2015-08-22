@@ -68,9 +68,11 @@ PIXI.loader
     .add("Images/creatures/love1.png")
     .add("Images/creatures/police1.png")
     .add("Images/creatures/child1.png")
+    .add("Images/Backgrounds/BackgroundPics/easy.png")
     .load(setup);
 
 var monster1;
+var bg0;
 
 var menuSprites = [];
 var soundToggle;
@@ -137,12 +139,16 @@ function drawHealth(){
 }
 
 function setup(){
+    bg0 = new PIXI.Sprite.fromImage("Images/Backgrounds/BackgroundPics/easy.png");
+    bg0.x=0;
+    bg0.y=0;
+    playC.addChild(bg0);
     monster1 = new PIXI.Sprite.fromImage("Images/creatures/monster1.png");
     monster1.pivot.x = 0.5;
     monster1.pivot.y = 0.5;
     playC.addChild(monster1);
     // playC.addChild(hbc);
-    // playC.addChild(hb); NOT WORKING!
+    // playC.addChild(hb); NOT
 
     escapeKey.press = function(){ changeState(menu) };
 
