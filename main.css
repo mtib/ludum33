@@ -13,7 +13,7 @@ h1{
 small{
     margin-top: 0px;
 }
-#old{
+img.small{
     height:4em;
     padding: 0em .5em;
 }
@@ -24,8 +24,14 @@ table{
     margin: auto auto;
     border-radius: .5em;;
 }
+#creators, #art, #tools{
+    background-color:#A8A8A8;
+}
+#holder tr td{
+    vertical-align: top;
+}
 td, th{
-    background-color: #A8A8A8;
+
     margin: auto .5em;
 }
 #goal{

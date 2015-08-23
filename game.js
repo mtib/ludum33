@@ -6,7 +6,7 @@ var stage = new PIXI.Container();
 var bgC = new PIXI.Container();
 stage.addChild(bgC);
 var defaultTextStyle = {font: "16px 'Bree Serif'", fill: "#FFFFFF", align: "center"};
-var version = "v_ld: 003_33";
+var version = "v_ld: 004_33";
 var versionText = new PIXI.Text(version, defaultTextStyle);
 var debugText = new PIXI.Text("", {font:"16px 'Bree Serif'", fill:"#3F3F3F"});
 debugText.anchor.y=1.0;
@@ -90,6 +90,8 @@ PIXI.loader
     .add("Images/creatures/love1.png")
     .add("Images/creatures/police1.png")
     .add("Images/creatures/child1.png")
+    .add("Images/creatures/tank_base.png")
+    .add("Images/creatures/tank.png")
     .add(cps[0])
     .add(cps[1])
     .add(cps[2])
@@ -416,6 +418,8 @@ var numPolice = [1,5,10,6];
 var policeArray = [];
 var numChildren = [10,15,5,10];
 var childArray = [];
+var numTanks = [0,0,2,1];
+var tankArray = [];
 var safeframecount = 0;
 function enemyBehaviour(){
     if(state!=play){
@@ -444,6 +448,89 @@ function enemyBehaviour(){
             childArray[i]=n; // this seems to be empty
         }
     };
+    for (var i = tankArray.length - 1; i >= 0; i--) {
+        tankArray[i].update();
+    };
+}
+
+function Tank(){
+    // Init
+    var tank = this;
+    var center = {x:0.5, y:0.5};
+    var scale = {x:0.7, y:0.7};
+    this.baseSprite = new PIXI.Sprite.fromImage("Images/creatures/tank_base.png");
+    this.topSprite = new PIXI.Sprite.fromImage("Images/creatures/tank.png");
+    this.bottomrotation = undefined;
+    // Settings
+    this.baseSprite.anchor=center;
+    this.baseSprite.pivot=center;
+    this.baseSprite.scale=scale;
+    this.topSprite.scale=scale;
+    this.topSprite.anchor=center;
+    this.topSprite.pivot=center;
+    // n*50ms;
+    this.cooldown=10;
+    this.invicfram=0; // Hit player on collision
+    this.respawn = function(){
+        this.x = rint(0, width);
+        this.y = rint(-32,-20);
+        if(Math.Random>0.5){
+            this.y = -this.y;
+        }
+        this.vx = rint(-2,2);
+        this.vy = rint(-2,2);
+        this.bottomrotation = -Math.atan(this.vx/this.vy);
+        if(this.vy>0){
+            this.bottomrotation += 3.1415;
+        }
+        this.baseSprite.rotation = this.bottomrotation;
+    };
+    this.shoot=function(){
+        var vec = normalize(diff(monster1,tank));
+        var sx = Math.sin(this.topSprite.rotation)*16;
+        var sy = Math.cos(this.topSprite.rotation)*16;
+        new Shot(this.x+sx,this.y-sy,vec.x*6,vec.y*6,-300);
+        new Shot(this.x+sx,this.y-sy,vec.x*6,vec.y*6,-300);
+        new Shot(this.x+sx,this.y-sy,vec.x*6,vec.y*6,-300);
+    }
+    this.unload = function(){
+        playC.removeChild(this.topSprite);
+        playC.removeChild(this.baseSprite);
+    };
+    this.move = function(){
+        this.x+=this.vx;
+        this.y+=this.vy;
+        this.topSprite.position.set(this.x,this.y);
+        this.baseSprite.position.set(this.x,this.y);
+        if(this.cooldown <= 0 && score>0 && (this.x > 32 && this.x < width-32 && this.y < height-32 && this.y > 32)){
+            this.cooldown = 100;
+            this.shoot();
+        }
+    };
+    this.turn = function(){
+        var vec = normalize(diff(monster1,this));
+        var rot = -Math.atan(vec.x/vec.y);
+        if(vec.y>0){
+            rot += 3.1415;
+        }
+        this.topSprite.rotation=rot;
+    };
+    this.update = function(){
+        this.turn();
+        this.move();
+        if(this.x>width+32 || this.x < -32 || this.y > height+32 || this.y < -32){
+            this.respawn();
+        }
+        if(vecDist(this,monster1)<30 && this.invicfram<=0){
+            health-=20;
+            this.invicfram=20;
+        }
+        this.cooldown-=1;
+        this.invicfram-=1;
+    };
+    this.respawn();
+    playC.addChild(this.baseSprite);
+    playC.addChild(this.topSprite);
 }
 
 function Child(){
@@ -757,6 +844,9 @@ function changeState(newstate){
         for(i=0;i<numChildren[hardness];i++){
             childArray[i] = new Child();
         }
+        for(i=0;i<numTanks[hardness];i++){
+            tankArray[i] = new Tank();
+        }
     }
     if (newstate == credit) {
         creditUnroll=0;
@@ -794,6 +884,9 @@ function changeState(newstate){
         hitescp.text="";
         for (var i = policeArray.length - 1; i >= 0; i--) {
             policeArray[i].die();
+        };
+        for (var i = tankArray.length - 1; i >= 0; i--) {
+            tankArray[i].unload();
         };
     }
     refreshMusic();
