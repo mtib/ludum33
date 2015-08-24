@@ -198,17 +198,17 @@ var storyModeText = new Howl({ // Played once on "Story"
 var eatSound = new Howl({
     urls: ["Sounds/eat.wav"],
     loop: false,
-    volume: 0.4
+    volume: 0.3
 });
 var selectSound = new Howl({
     urls: ["Sounds/select.wav"],
     loop: false,
-    volume: 0.3
+    volume: 0.2
 });
 var endSound = new Howl({
     urls: ["Sounds/end.wav"],
     loop: false,
-    volume: 0.2
+    volume: 0.1
 });
 var shootSound = new Howl({
     urls: ["Sounds/shoot.wav"],
@@ -218,7 +218,7 @@ var shootSound = new Howl({
 var hitSound = new Howl({
     urls: ["Sounds/hit.wav"],
     loop: false,
-    volume: 0.2
+    volume: 0.1
 });
 
 
@@ -570,7 +570,8 @@ function Child(){
             this.put();
         if(vecDist(monster1, this.sprite) < 32){
             score += 1;
-            eatSound.play();
+            if(state==play)
+                eatSound.play();
             return this.die();
         }
     };
@@ -629,9 +630,11 @@ function Shot(x,y,vx,vy, travel){
         playC.addChild(this.line);
         if(vecDist(this,monster1)<27){
             health -= this.damage;
-            hitSound.play();
-            if(health<=0){
-                endSound.play();
+            if(state==play){
+                hitSound.play();
+                if(health<=0){
+                    endSound.play();
+                }
             }
         }else if(travel<300){
             window.setTimeout(function(){ new Shot(shot.x,shot.y,shot.vx,shot.vy, travel+Math.sqrt(shot.vx*shot.vx+shot.vy*shot.vy)); }, 30);
@@ -670,7 +673,7 @@ function Police(){
     this.shoot = function(){
         if(police.shooting){
 
-            if(score > 0){
+            if(score > 0 && state==play){
                 shootSound.play();
                 var relMon = normalize(diff(monster1, police));
                 new Shot(police.x+Math.sin(police.sprites.shoot.rotation-.25*3.1415)*14.284, police.y+Math.cos(police.sprites.shoot.rotation-.25*3.1415)*14.284,relMon.x*police.shotTravelSpeed, relMon.y*police.shotTravelSpeed);
@@ -781,7 +784,7 @@ function Casult(){
             if(score == goals[hardness]-1){
                 // Sound is played in Woman(...)
                 return new Woman(this.x, this.y);
-            }else {
+            }else if(state==play){
                 eatSound.play();
             }
             score += 1;
@@ -938,11 +941,11 @@ function vecDist(a,b){
 }
 
 function refreshSounds(){
-    eatSound.volume(0.4 * soundmult);
-    selectSound.volume(0.3*soundmult);
-    endSound.volume(0.2*soundmult);
+    eatSound.volume(0.3 * soundmult);
+    selectSound.volume(0.2*soundmult);
+    endSound.volume(0.1*soundmult);
     shootSound.volume(0.1*soundmult);
-    hitSound.volume(0.2*soundmult);
+    hitSound.volume(0.1*soundmult);
     if(soundmult == 0){
         soundToggle.rotation = .2; // 1 rad
     } else {
