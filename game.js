@@ -294,6 +294,9 @@ function setup(){
         menuSprites[i].position.set(renderer.width/2, 64 + i/menuButtons.length*400);
         menuC.addChild(menuSprites[i]);
     };
+
+    stage.interactive=true;
+    stage.click=function(data){sprint();};
     soundToggle = new PIXI.Sprite.fromImage("Images/buttons/sound.png");
     soundToggle.interactive=true;
     soundToggle.click=function(data){ soundmult = abs(soundmult-1); refreshSounds() };
@@ -386,6 +389,27 @@ function play(){
     }
     if(health<=0){
         lose();
+    }
+}
+
+var jumplength = 80;
+function sprint(data){
+    if(state==play && health>0 && score > 0){
+        score-=1;
+        var useRot = monster1.rotation;
+        if(vecDist(monster1,mousePos)<jumplength){
+            var d = diff(monster1, mousePos);
+            monster1.x-=d.x*0.8;
+            monster1.y-=d.y*0.8;
+        }else{
+            if(useRot>3.1415/2){
+                monster1.x += Math.sin(monster1.rotation) * jumplength;
+                monster1.y += Math.cos(monster1.rotation) * -jumplength;
+            } else {
+                monster1.x += Math.sin(monster1.rotation) * jumplength;
+                monster1.y += Math.cos(monster1.rotation) * -jumplength;
+            }
+        }
     }
 }
 
