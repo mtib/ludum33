@@ -39,6 +39,8 @@ var topC = new PIXI.Container();
 
 var monsterBoost = 1.1; // Multiplies every Monster Speed
 
+// TODO: @fix Enable Keypresses on Website.
+// TEST: @fix Enable Keypresses on Website.
 var escapeKey = keyboard(27);
 var pointCheat = keyboard(80);
 pointCheat.press=function(){ health -= 10 };

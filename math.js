@@ -27,7 +27,7 @@ function keyboard(keyCode) {
     event.preventDefault();
   };
 
-  //The `upHandler`
+  //The `upHandler
   key.upHandler = function(event) {
     if (event.keyCode === key.code) {
       if (key.isDown && key.release) key.release();
